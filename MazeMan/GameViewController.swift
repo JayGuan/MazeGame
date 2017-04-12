@@ -10,7 +10,7 @@ import UIKit
 import SpriteKit
 import GameplayKit
 
-class GameViewController: UIViewController {
+class GameViewController: UIViewController, UIGestureRecognizerDelegate {
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -20,8 +20,9 @@ class GameViewController: UIViewController {
         skView.showsNodeCount = true
         skView.ignoresSiblingOrder = true
         scene.scaleMode = .resizeFill
-        skView.showsPhysics = true
+        skView.showsPhysics = false
         skView.presentScene(scene)
+        print(scene.playerObject.coordinate?.x)
     }
     
     override var prefersStatusBarHidden: Bool {
