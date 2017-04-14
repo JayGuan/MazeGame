@@ -24,30 +24,41 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
     var star: Grid!
     var blockCount = 0
     var messageNode = SKLabelNode()
+    var rockTimeCount = 0
+    var timer:Timer?
+    var foodTimeCount = -1
+    var gravityCountDown = 0
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
+        timer = Timer.scheduledTimer(timeInterval: 1,
+                                     target: self,
+                                     selector: #selector(self.updateTime),
+                                     userInfo: nil,
+                                     repeats: true)
         playerObject = Grid()
         data.populateCoordinates()
         addCharacter(imgName: "app-icon", row: 5, column: 8, direction: "right")
         addPhysics()
         addBitMask()
-        
-        
         addGround()
         addSides()
         populateBackground()
         populateMessage(message: message.welcomeMessage())
         populatePlayerStatus()
         
-        addMiddleItem(imgName: "block", width: 64, height: 64, row: 5, column: 6, zPosition: 1, scale: 1)
-        addMiddleItem(imgName: "food", width: 64, height: 64, row: 8, column: 8, zPosition: 1, scale: 1)
-        addMiddleItem(imgName: "star", width: 64, height: 64, row: 3, column: 7, zPosition: 1, scale: 1)
         
-        addEnemy(imgName: "dino1", width: 64, height: 64, row: 5, column: 4, zPosition: 1, scale: 1)
-        addEnemy(imgName: "dino2", width: 64, height: 64, row: 5, column: 3, zPosition: 1, scale: 1)
-        addEnemy(imgName: "dino3", width: 64, height: 64, row: 5, column: 2, zPosition: 1, scale: 1)
-        //addEnemy(imgName: "dino4", width: 64, height: 64, row: 5, column: 1, zPosition: 1, scale: 1)
+        //delete later
+        generateGravityTime()
+        addMiddleItem(imgName: "block", width: 64, height: 64, row: 5, column: 6, zPosition: 1, scale: 1)
+        addMiddleItem(imgName: "food", width: 64, height: 64, row: 8, column: 7, zPosition: 1, scale: 1)
+        addMiddleItem(imgName: "star", width: 64, height: 64, row: 7, column: 7, zPosition: 1, scale: 1)
+        
+        //addEnemy(imgName: "dino1", width: 64, height: 64, row: 0, column: 7, zPosition: 1, scale: 1)
+        //addEnemy(imgName: "dino2", width: 64, height: 64, row: 1, column: 7, zPosition: 1, scale: 1)
+        addEnemy(imgName: "dino3", width: 64, height: 64, row: 2, column: 7, zPosition: 1, scale: 1)
+        addEnemy(imgName: "dino4", width: 64, height: 64, row: 5, column: 1, zPosition: 1, scale: 1)
+        addEnemy(imgName: "fire", width: 64, height: 64, row: 5, column: 7, zPosition: 1, scale: 1)
         
         let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe))
         swipeRight.direction = UISwipeGestureRecognizerDirection.right
@@ -69,16 +80,55 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         self.view?.addGestureRecognizer(shoot)
     }
     
+    func generateGravityTime() {
+        gravityCountDown = 40 + Int(arc4random_uniform(20))
+    }
+    
+    func updateTime() {
+        playerStats.energy -= 1
+        updateHealth()
+        playerObject.content?.physicsBody?.affectedByGravity = false
+        gravityCountDown -= 1
+        if gravityCountDown == 3 {
+            messageNode.text = "Gravity time is very close!"
+        }
+        if gravityCountDown == 0 {
+            generateGravityTime()
+            playerObject.content?.physicsBody?.affectedByGravity = true
+            messageNode.text = message.welcomeMessage()
+        }
+        rockTimeCount += 1
+        if rockTimeCount == 30 {
+            rockTimeCount = 0
+            if playerStats.rockNum < 20 {
+                playerStats.rockNum += 1
+                rockLabel.text = "\(playerStats.rockNum)"
+            }
+        }
+        if foodTimeCount > -1 {
+            foodTimeCount += 1
+            if foodTimeCount == 10 {
+                foodTimeCount = -1
+                generateFood()
+            }
+        }
+    }
+    
     func generateFood() {
         let position = getRandomAvailablePosition()
         addMiddleItem(imgName: "food", width: 64, height: 64, row: position.row, column: position.column, zPosition: 1, scale: 1)
     }
     
+    func generateStar() {
+        let position = getRandomAvailablePosition()
+        addMiddleItem(imgName: "star", width: 64, height: 64, row: position.row, column: position.column, zPosition: 1, scale: 1)
+    }
+    
     func getRandomAvailablePosition() -> (row:Int, column:Int) {
         var found = false
         while !found {
-            let row = Int(arc4random_uniform(16))
-            let column = Int(arc4random_uniform(12))
+            let row = Int(arc4random_uniform(9))
+            let column = Int(arc4random_uniform(16))
             if data.contents[row][column].availability {
                 return (row:row, column:column)
                 found = true
@@ -103,6 +153,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
                 let action = SKAction.repeatForever(SKAction.move(by: vector, duration: 2))
                 
                 let rock = SKSpriteNode(imageNamed: "rock")
+                rock.name = "rock"
                 rock.size = CGSize(width:60,height:60)
                 rock.position = CGPoint(x:(playerObject.content?.position.x)!, y:(playerObject.content?.position.y)!)
                 rock.zPosition = CGFloat(1)
@@ -112,12 +163,12 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
                 self.addChild(rock)
                 //add physics body
                 rock.run(action)
-                updateRock()
+                throwRock()
             }
         }
     }
     
-    func updateRock() {
+    func throwRock() {
         playerStats.rockNum -= 1
         rockLabel.text = "\(playerStats.rockNum)"
     }
@@ -131,7 +182,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         rock.physicsBody?.contactTestBitMask = PhysicsCategory.Enemy.rawValue
     }
     
-    func addStar() {
+    func addStarCount() {
         playerStats.starNum += 1
         starLabel.text = "\(playerStats.starNum)"
     }
@@ -401,7 +452,12 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
             data.contents[row][column] = item
             
             let monsters = SKSpriteNode(imageNamed: imgName)
-            monsters.size = CGSize(width:width,height:height)
+            if imgName == "dino4" {
+                monsters.size = CGSize(width:width*2,height:height)
+            }
+            else {
+                monsters.size = CGSize(width:width,height:height)
+            }
             monsters.position = CGPoint(x:xCoordinate, y:yCoordinate)
             monsters.zPosition = CGFloat(zPosition)
             monsters.scene?.scaleMode = SKSceneScaleMode.aspectFill
@@ -415,7 +471,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
             monsters.name = imgName
             self.addChild(monsters)
             
-            let action = SKAction.move(by: CGVector(dx: 0, dy: -900), duration: 7.0)
+            let action = SKAction.move(by: CGVector(dx: 0, dy: 900), duration: 7.0)
             monsters.run(action)
             //TODO
             //add bitmask
@@ -454,14 +510,12 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         let contactA = contact.bodyA.categoryBitMask
         let contactB = contact.bodyB.categoryBitMask
         
-        //playerObject.content?.removeAction(forKey: "move")
-        // contactA == PhysicsCategory.Player.rawValue && contactB == PhysicsCategory.Block.rawValue
-        
         //if Player contacted something
         if contactA == PhysicsCategory.Player.rawValue {
             switch contactB {
             case PhysicsCategory.Enemy.rawValue:
                 reduceEnergy(enemyName: (contact.bodyB.node?.name)!)
+                playerObject.content?.removeAction(forKey: "move")
                 updateHealth()
             case PhysicsCategory.Water.rawValue:
                 print("water contacted")
@@ -479,11 +533,11 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
                 updateHealth()
                 food.content?.removeFromParent()
                 generateFood()
-                //TODO add food somewhere else
             case PhysicsCategory.Star.rawValue:
-                addStar()
+                addStarCount()
                 messageNode.text = "Bravo, you've got the star"
                 star.content?.removeFromParent()
+                generateStar()
             default:
                 break
             }
@@ -492,6 +546,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
             switch contactA {
             case PhysicsCategory.Enemy.rawValue:
                 reduceEnergy(enemyName: (contact.bodyA.node?.name)!)
+                playerObject.content?.removeAction(forKey: "move")
                 populatePlayerStatus()
             case PhysicsCategory.Water.rawValue:
                 playerStats.energy = 0
@@ -507,46 +562,83 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
                 updateHealth()
                 food.content?.removeFromParent()
                 generateFood()
-            //TODO add food somewhere else
             case PhysicsCategory.Star.rawValue:
-                addStar()
+                addStarCount()
                 messageNode.text = "Bravo, you've got the star"
                 star.content?.removeFromParent()
+                generateStar()
             //TODO gameover
             default:
                 break
             }
         }
-        else if ((contactA == PhysicsCategory.Enemy.rawValue && contactB == PhysicsCategory.Food.rawValue) ||
-            (contactB == PhysicsCategory.Enemy.rawValue && contactA == PhysicsCategory.Food.rawValue)) {
-            // enemy eats food
-            food.content?.removeFromParent()
-            // new food place
+        // Enemy contacts
+        else if contactA == PhysicsCategory.Enemy.rawValue && contactB == PhysicsCategory.Food.rawValue
+             {
+                // enemy eats food
+            if contact.bodyA.node?.name == "dino1" ||
+                contact.bodyA.node?.name == "dino2" ||
+                contact.bodyA.node?.name == "dino3" {
+                foodTimeCount = 0
+                food.content?.removeFromParent()
+                }
+            
         }
+        else if contactB == PhysicsCategory.Enemy.rawValue && contactA == PhysicsCategory.Food.rawValue {
+            // enemy eats food
+            if contact.bodyB.node?.name == "dino1" ||
+                contact.bodyB.node?.name == "dino2" ||
+                contact.bodyB.node?.name == "dino3" {
+                foodTimeCount = 0
+                food.content?.removeFromParent()
+            }
+        }
+        // Rock contacts
         else if contactA == PhysicsCategory.Rock.rawValue && contactB == PhysicsCategory.Enemy.rawValue {
+            if contact.bodyB.node?.name == "dino1" ||
+                contact.bodyB.node?.name == "dino2" ||
+                contact.bodyB.node?.name == "dino3" ||
+            contact.bodyB.node?.name == "fire" {
             let name = contact.bodyB.node?.name!
             messageNode.text = "\(name!) killed"
             contact.bodyB.node?.removeFromParent()
+            contact.bodyA.node?.removeFromParent()
+            }
         }
         else if contactB == PhysicsCategory.Rock.rawValue && contactA == PhysicsCategory.Enemy.rawValue{
-            let name = contact.bodyB.node?.name!
+            if contact.bodyA.node?.name == "dino1" ||
+                contact.bodyA.node?.name == "dino2" ||
+                contact.bodyA.node?.name == "dino3" ||
+                contact.bodyA.node?.name == "fire" {
+            let name = contact.bodyA.node?.name!
             messageNode.text = "\(name!) killed"
             contact.bodyA.node?.removeFromParent()
+            contact.bodyB.node?.removeFromParent()
+            }
         }
     }
     
     func reduceEnergy(enemyName: String) {
+        var energy = playerStats.energy
+        
         switch enemyName {
         case "dino1":
-            return playerStats.energy-=60
+            energy-=60
         case "dino2":
-            return playerStats.energy-=80
+            energy-=80
         case "dino3":
-            return playerStats.energy-=100
+            energy-=100
         case "fire":
-            return playerStats.energy-=100
+            energy-=100
         default:
-            playerStats.energy-=0
+            energy-=0
+        }
+        if energy < 0 {
+            playerStats.energy = 0
+            //TODO call gameover
+        }
+        else {
+            playerStats.energy = energy
         }
     }
     
