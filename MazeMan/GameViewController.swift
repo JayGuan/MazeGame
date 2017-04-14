@@ -20,7 +20,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate {
         skView.showsNodeCount = true
         skView.ignoresSiblingOrder = true
         scene.scaleMode = .resizeFill
-        skView.showsPhysics = false
+        skView.showsPhysics = true
         skView.presentScene(scene)
         print(scene.playerObject.coordinate?.x)
     }
