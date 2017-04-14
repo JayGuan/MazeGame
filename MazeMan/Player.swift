@@ -17,7 +17,7 @@ class Player {
     var starNum = 0
     
     func getLife() -> Int {
-        return energy/100
+        return energy/100 + 1
     }
     
     func getEnergy() ->Int {

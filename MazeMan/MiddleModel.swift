@@ -14,7 +14,7 @@ class MiddleModel {
     
     func populateCoordinates() {
         // each row
-        for i in 0..<9{
+        for i in 0..<12{
             let newRow = [Grid]()
             contents.append(newRow)
             //each column
@@ -40,7 +40,8 @@ class MiddleModel {
     }
     
     func coordinateByIndex(row: Int, column:Int)->(x:Int, y:Int) {
-        let coordinate:(x:Int, y:Int) = (column*64+32, row*64+96)
+        let coordinate:(x:Int, y:Int) = (column*64+32, row*64+32)
+        print("coordinateByIntext: y[\(coordinate.y)]")
         return coordinate
     }
 }
