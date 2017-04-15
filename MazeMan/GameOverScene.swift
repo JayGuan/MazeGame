@@ -44,7 +44,7 @@ class GameOverScene: SKScene {
     }
     
     func tapFunction() {
-        let scene = GameScene(size: (self.view?.bounds.size)!)
+        let scene = GameScene(size: self.size, highestScores: self.highScores)
         self.view?.presentScene(scene)
     }
 }

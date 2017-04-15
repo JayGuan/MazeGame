@@ -12,10 +12,10 @@ import GameplayKit
 
 class GameViewController: UIViewController, UIGestureRecognizerDelegate {
     override func viewDidLoad() {
-        var highScores = [Int](repeating: 0, count: 3)
+        let highScores = [Int](repeating: 0, count: 3)
         
         super.viewDidLoad()
-        let scene = GameScene(size: view.bounds.size)
+        let scene = GameScene(size: self.view.bounds.size, highestScores: highScores)
         let skView = view as! SKView
         skView.showsFPS = true
         skView.showsNodeCount = true
@@ -23,7 +23,6 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate {
         scene.scaleMode = .resizeFill
         skView.showsPhysics = true
         skView.presentScene(scene)
-        print(scene.playerObject.coordinate?.x)
     }
     
     override var prefersStatusBarHidden: Bool {

@@ -74,10 +74,18 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         addSounds()
     }
     */
+    init(size: CGSize, highestScores: [Int]) {
+        super.init(size: size)
+        self.physicsWorld.contactDelegate = self
+        top3Score = highestScores
+
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func didMove(to view: SKView) {
-        self.physicsWorld.contactDelegate = self
-        //top3Score = highestScores
         print("highest scores: \(top3Score[0])")
         setTime()
         playerObject = Grid()
@@ -96,6 +104,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         //loadTestItems()
         addGestures()
         addSounds()
+        print("top3Score \(top3Score[0])")
     }
     
     func setTime() {
