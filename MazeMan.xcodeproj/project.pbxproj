@@ -13,6 +13,7 @@
 		681132181EA2786100072A76 /* scoreSound.wav in Resources */ = {isa = PBXBuildFile; fileRef = 681132131EA2786100072A76 /* scoreSound.wav */; };
 		681132191EA2786100072A76 /* shootRockSound.wav in Resources */ = {isa = PBXBuildFile; fileRef = 681132141EA2786100072A76 /* shootRockSound.wav */; };
 		6811321A1EA2786100072A76 /* eatSound.wav in Resources */ = {isa = PBXBuildFile; fileRef = 681132151EA2786100072A76 /* eatSound.wav */; };
+		6811321C1EA2A2EB00072A76 /* GameOverScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6811321B1EA2A2EB00072A76 /* GameOverScene.swift */; };
 		6855C98F1E9DFF9B004B25C8 /* Enemy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6855C98E1E9DFF9B004B25C8 /* Enemy.swift */; };
 		68C535731E932E5300EE0BB7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68C535721E932E5300EE0BB7 /* AppDelegate.swift */; };
 		68C535791E932E5300EE0BB7 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68C535781E932E5300EE0BB7 /* GameScene.swift */; };
@@ -34,6 +35,7 @@
 		681132131EA2786100072A76 /* scoreSound.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = scoreSound.wav; sourceTree = "<group>"; };
 		681132141EA2786100072A76 /* shootRockSound.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = shootRockSound.wav; sourceTree = "<group>"; };
 		681132151EA2786100072A76 /* eatSound.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = eatSound.wav; sourceTree = "<group>"; };
+		6811321B1EA2A2EB00072A76 /* GameOverScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameOverScene.swift; sourceTree = "<group>"; };
 		6855C98E1E9DFF9B004B25C8 /* Enemy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Enemy.swift; sourceTree = "<group>"; };
 		68C5356F1E932E5300EE0BB7 /* MazeMan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MazeMan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		68C535721E932E5300EE0BB7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -115,6 +117,7 @@
 				681132141EA2786100072A76 /* shootRockSound.wav */,
 				681132151EA2786100072A76 /* eatSound.wav */,
 				68C535781E932E5300EE0BB7 /* GameScene.swift */,
+				6811321B1EA2A2EB00072A76 /* GameOverScene.swift */,
 			);
 			name = View;
 			sourceTree = "<group>";
@@ -206,6 +209,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6811321C1EA2A2EB00072A76 /* GameOverScene.swift in Sources */,
 				68C535A61E94457F00EE0BB7 /* MiddleModel.swift in Sources */,
 				6855C98F1E9DFF9B004B25C8 /* Enemy.swift in Sources */,
 				68C535901E932F1200EE0BB7 /* Player.swift in Sources */,

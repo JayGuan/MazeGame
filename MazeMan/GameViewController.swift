@@ -12,6 +12,7 @@ import GameplayKit
 
 class GameViewController: UIViewController, UIGestureRecognizerDelegate {
     override func viewDidLoad() {
+        var highScores = [Int](repeating: 0, count: 3)
         
         super.viewDidLoad()
         let scene = GameScene(size: view.bounds.size)

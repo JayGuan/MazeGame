@@ -48,9 +48,13 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
     var killEnemySound = AVAudioPlayer()
     var playerDiesSound = AVAudioPlayer()
     var enemyAttackSound = AVAudioPlayer()
-    
-    override func didMove(to view: SKView) {
+    var top3Score = [Int](repeating: 0, count: 3)
+    /*
+    init(size: CGSize, highestScores: [Int]) {
+        super.init()
         self.physicsWorld.contactDelegate = self
+        top3Score = highestScores
+        print("highest scores: \(top3Score[0])")
         setTime()
         playerObject = Grid()
         data.populateCoordinates()
@@ -61,7 +65,31 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         populateBackground()
         populateMessage(message: message.welcomeMessage())
         populatePlayerStatus()
-        loadEnemies()
+        loadInitialItems()
+        //delete later
+        generateGravityTime()
+        generateFireBallTime()
+        //loadTestItems()
+        addGestures()
+        addSounds()
+    }
+    */
+    
+    override func didMove(to view: SKView) {
+        self.physicsWorld.contactDelegate = self
+        //top3Score = highestScores
+        print("highest scores: \(top3Score[0])")
+        setTime()
+        playerObject = Grid()
+        data.populateCoordinates()
+        addCharacter(imgName: "app-icon", row: 1, column: 0, direction: "right")
+        addPhysics()
+        addBitMask()
+        addSides()
+        populateBackground()
+        populateMessage(message: message.welcomeMessage())
+        populatePlayerStatus()
+        loadInitialItems()
         //delete later
         generateGravityTime()
         generateFireBallTime()
@@ -170,7 +198,9 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         self.view?.addGestureRecognizer(shoot)
     }
     
-    func loadEnemies() {
+    func loadInitialItems() {
+        generateFood()
+        generateStar()
         loadDino1()
         loadDino2()
         loadDino3()
@@ -312,7 +342,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         }
         dino3Position = dino3.position
         if playerStats.energy <= 0 {
-            playerDiesSound.play()
+            gameOver()
         }
     }
     
@@ -1014,6 +1044,34 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         }
         else {
             playerStats.energy = energy
+        }
+    }
+    
+    func stopTimers() {
+        timer?.invalidate()
+        dino3Timer?.invalidate()
+        timer = nil
+        dino3Timer = nil
+    }
+    
+    func gameOver() {
+        //clean up the variables
+        stopTimers()
+        playerDiesSound.play()
+        updateHighestScore()
+        let flipTransition = SKTransition.doorsCloseHorizontal(withDuration: 3.0)
+        let gameOverScene = GameOverScene(size: self.size, score: playerStats.starNum, highestScores: self.top3Score)
+        gameOverScene.scaleMode = .aspectFill
+        self.view?.presentScene(gameOverScene, transition: flipTransition)
+    }
+    
+    func updateHighestScore() {
+        top3Score.sort()
+        for i in 0...2 {
+            if top3Score[i] < playerStats.starNum {
+                top3Score[i] = playerStats.starNum
+                break
+            }
         }
     }
     
