@@ -20,7 +20,6 @@ class MiddleModel {
             //each column
             for j in 0..<16 {
                     let coordinate:(x:Int, y:Int) = (j*64+32, i*64+96)
-                    print("x[\(coordinate.x)] y[\(coordinate.y)]")
                     let grid = Grid()
                     grid.coordinate = coordinate
                     contents[i].append(grid)
@@ -41,7 +40,6 @@ class MiddleModel {
     
     func coordinateByIndex(row: Int, column:Int)->(x:Int, y:Int) {
         let coordinate:(x:Int, y:Int) = (column*64+32, row*64+32)
-        print("coordinateByIntext: y[\(coordinate.y)]")
         return coordinate
     }
 }
