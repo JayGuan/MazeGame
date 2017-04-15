@@ -30,7 +30,6 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
     var foodTimeCount = -1
     var gravityCountDown = 0
     var characterMovementDuration = 5
-    var enemySpawnTime = [Int]()
     var dinoSpeed = 180.0
     var playerSpeed = 150.0
     var rockSpeed = 200.0
@@ -39,6 +38,9 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
     var dino3Direction = 0
     var dino3Position = CGPoint()
     var dino3 = SKNode()
+    var dino3Timer:Timer?
+    var enemySpawnTime = [Int](repeating: -1, count: 4)
+    var enemyDeadTime = [Int](repeating: -1, count: 4)
     //audios
     var eatFoodSound = AVAudioPlayer()
     var scoringSound = AVAudioPlayer()
@@ -46,33 +48,39 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
     var killEnemySound = AVAudioPlayer()
     var playerDiesSound = AVAudioPlayer()
     var enemyAttackSound = AVAudioPlayer()
-
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
+        setTime()
+        playerObject = Grid()
+        data.populateCoordinates()
+        addCharacter(imgName: "app-icon", row: 1, column: 0, direction: "right")
+        addPhysics()
+        addBitMask()
+        addSides()
+        populateBackground()
+        populateMessage(message: message.welcomeMessage())
+        populatePlayerStatus()
+        loadEnemies()
+        //delete later
+        generateGravityTime()
+        generateFireBallTime()
+        //loadTestItems()
+        addGestures()
+        addSounds()
+    }
+    
+    func setTime() {
         timer = Timer.scheduledTimer(timeInterval: 1,
                                      target: self,
                                      selector: #selector(self.updateTime),
                                      userInfo: nil,
                                      repeats: true)
-        playerObject = Grid()
-        data.populateCoordinates()
-        addCharacter(imgName: "app-icon", row: 5, column: 8, direction: "right")
-        addPhysics()
-        addBitMask()
-        //addGround()
-        addSides()
-        populateBackground()
-        populateMessage(message: message.welcomeMessage())
-        populatePlayerStatus()
-        initializeEnemySpawnTime()
-        loadEnemies()
-        //delete later
-        generateGravityTime()
-        generateFireBallTime()
-        loadTestItems()
-        addGestures()
-        addSounds()
+        dino3Timer = Timer.scheduledTimer(timeInterval: 0.2,
+                                          target: self,
+                                          selector: #selector(self.updateDino3Time),
+                                          userInfo: nil,
+                                          repeats: true)
     }
     
     func loadTestItems() {
@@ -162,15 +170,14 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         self.view?.addGestureRecognizer(shoot)
     }
     
-    func initializeEnemySpawnTime() {
-        // 4 types of enemies
-        for i in 0..<4 {
-            enemySpawnTime.append(-1)
-        }
+    func loadEnemies() {
+        loadDino1()
+        loadDino2()
+        loadDino3()
+        loadDino4()
     }
     
-    func loadEnemies() {
-        
+    func loadDino1() {
         let waterBlockIndex = Int(arc4random_uniform(2))
         var dino1Position = 0
         if waterBlockIndex == 0 {
@@ -179,24 +186,31 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         else {
             dino1Position = 11
         }
-        let dino2Position = Int(arc4random_uniform(9)) + 1
-        //loadDino1(columnNum: dino1Position)
-        //loadDino2(rowNum: dino2Position)
-        loadDino3()
-        //loadDino4()
+        addEnemy(imgName: "dino1", width: 64, height: 64, row: 0, column: dino1Position, zPosition: 3, scale: 1)
     }
     
-    func loadDino1(columnNum: Int) {
-        addEnemy(imgName: "dino1", width: 64, height: 64, row: 0, column: columnNum, zPosition: 3, scale: 1)
-        
+    func reloadDino1() {
+        enemyDeadTime[0] = 0
+        enemySpawnTime[0] = Int(arc4random_uniform(5)) + 1
     }
-
-    func loadDino2(rowNum: Int) {
-        addEnemy(imgName: "dino2", width: 64, height: 64, row: rowNum, column: 15, zPosition: 3, scale: 1)
+    
+    func loadDino2() {
+        let dino2Position = Int(arc4random_uniform(9)) + 1
+        addEnemy(imgName: "dino2", width: 64, height: 64, row: dino2Position, column: 15, zPosition: 3, scale: 1)
+    }
+    
+    func reloadDino2() {
+        enemyDeadTime[1] = 0
+        enemySpawnTime[1] = Int(arc4random_uniform(5)) + 1
     }
     
     func loadDino3() {
-        addEnemy(imgName: "dino3", width: 64, height: 64, row: 1, column: 2, zPosition: 3, scale: 1)
+        addEnemy(imgName: "dino3", width: 64, height: 64, row: 9, column: 0, zPosition: 3, scale: 1)
+    }
+    
+    func reloadDino3() {
+        enemyDeadTime[2] = 0
+        enemySpawnTime[2] = Int(arc4random_uniform(5)) + 1
     }
     
     func loadDino4() {
@@ -246,15 +260,18 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         //test each contact
         while direction == dino3Direction {
             direction = Int(arc4random_uniform(4))
-            print("new direction")
         }
         switch direction {
         case 0:
+            dino3.xScale = -1
             dino3.run(moveLeft)
             dino3Direction = 0
+            
         case 1:
+            dino3.xScale = 1
             dino3.run(moveRight)
             dino3Direction = 1
+            
         case 2:
             dino3.run(moveUp)
             dino3Direction = 2
@@ -288,11 +305,43 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         fireballTime = Int(arc4random_uniform(5)) + 6
     }
     
-    func updateTime() {
+    func updateDino3Time() {
         if dino3.position == dino3Position {
+            dino3.removeAllActions()
             addDino3Action(dino3: dino3)
         }
         dino3Position = dino3.position
+        if playerStats.energy <= 0 {
+            playerDiesSound.play()
+        }
+    }
+    
+    func updateTime() {
+        for i in 0...2 {
+            // if enemy is dead
+            if enemySpawnTime[i] != -1 {
+                enemyDeadTime[i] += 1
+                if enemySpawnTime[i] == enemyDeadTime[i] {
+                    let position = getRandomAvailablePosition()
+                    switch i {
+                    case 0:
+                        addEnemy(imgName: "dino1", width: 64, height: 64, row: position.row, column: position.column, zPosition: 3, scale: 1)
+                    case 1:
+                        addEnemy(imgName: "dino2", width: 64, height: 64, row: position.row, column: position.column, zPosition: 3, scale: 1)
+                    case 2:
+                        addEnemy(imgName: "dino3", width: 64, height: 64, row: position.row, column: position.column, zPosition: 3, scale: 1)
+                    default:
+                        break
+                    }
+                    
+                }
+            }
+        }
+        
+        if blockCount < 15 {
+            blockCount += 1
+            generateBlocks()
+        }
         playerStats.energy -= 1
         updateHealth()
         playerObject.content?.physicsBody?.affectedByGravity = false
@@ -325,6 +374,11 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
             generateFireBall(dino4: dino4)
             generateFireBallTime()
         }
+    }
+    
+    func generateBlocks() {
+        let position = getRandomAvailablePosition()
+        addMiddleItem(imgName: "block", width: 64, height: 64, row: position.row, column: position.column, zPosition: 1, scale: 1)
     }
     
     func generateFood() {
@@ -537,7 +591,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         //buttom
         for i in 0...15 {
             if i == 5 || i == 11 {
-                addItem(imgName: "water", width:64, height:50, xCoordinate:i*64+32, yCoordinate:32,zPosition:0, scale:1)
+                addItem(imgName: "water", width:64, height:45, xCoordinate:i*64+32, yCoordinate:28 ,zPosition:0, scale:1)
             }
             else {
                 addItem(imgName: "block", width:64, height:64, xCoordinate:i*64+32, yCoordinate:32,zPosition:0, scale:1)
@@ -665,6 +719,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
             }
             var xCoordinate = data.coordinateByIndex(row: row, column: column).x
             var yCoordinate = data.coordinateByIndex(row: row, column: column).y
+            yCoordinate -= 2
             item.coordinate = (xCoordinate, yCoordinate)
             item.itemName = imgName
             data.contents[row][column] = item
@@ -721,7 +776,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         node.physicsBody?.affectedByGravity = false
         node.physicsBody?.categoryBitMask = PhysicsCategory.Enemy.rawValue
         node.physicsBody?.contactTestBitMask = PhysicsCategory.Block.rawValue | PhysicsCategory.Player.rawValue | PhysicsCategory.Rock.rawValue | PhysicsCategory.LeftEdge.rawValue | PhysicsCategory.RightEdge.rawValue | PhysicsCategory.Top.rawValue | PhysicsCategory.Ground.rawValue
-        node.physicsBody?.collisionBitMask = PhysicsCategory.Player.rawValue | PhysicsCategory.Ground.rawValue | PhysicsCategory.LeftEdge.rawValue | PhysicsCategory.RightEdge.rawValue | PhysicsCategory.Top.rawValue
+        node.physicsBody?.collisionBitMask = PhysicsCategory.Player.rawValue | PhysicsCategory.LeftEdge.rawValue | PhysicsCategory.RightEdge.rawValue | PhysicsCategory.Top.rawValue
     }
     
     func setPhysBodyCollideBlocks(node: SKSpriteNode) {
@@ -729,7 +784,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         node.physicsBody?.allowsRotation = false
         node.physicsBody?.affectedByGravity = false
         node.physicsBody?.categoryBitMask = PhysicsCategory.Enemy.rawValue
-        node.physicsBody?.contactTestBitMask = PhysicsCategory.Block.rawValue | PhysicsCategory.Player.rawValue | PhysicsCategory.Rock.rawValue | PhysicsCategory.LeftEdge.rawValue | PhysicsCategory.RightEdge.rawValue | PhysicsCategory.Top.rawValue | PhysicsCategory.Ground.rawValue
+        node.physicsBody?.contactTestBitMask = PhysicsCategory.Block.rawValue | PhysicsCategory.Player.rawValue | PhysicsCategory.Rock.rawValue | PhysicsCategory.LeftEdge.rawValue | PhysicsCategory.RightEdge.rawValue | PhysicsCategory.Top.rawValue | PhysicsCategory.Ground.rawValue | PhysicsCategory.Food.rawValue
         node.physicsBody?.collisionBitMask = PhysicsCategory.Block.rawValue | PhysicsCategory.Player.rawValue | PhysicsCategory.Ground.rawValue | PhysicsCategory.LeftEdge.rawValue | PhysicsCategory.RightEdge.rawValue | PhysicsCategory.Top.rawValue
     }
     
@@ -748,7 +803,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
             contact.bodyA.node!.removeAllActions()
             addDino3Action(dino3: contact.bodyA.node!)
         }
-        else if contact.bodyB.node?.name == "dino3" {
+        if contact.bodyB.node?.name == "dino3" {
             print("dino3 is contacted")
             
             contact.bodyB.node!.removeAllActions()
@@ -756,7 +811,7 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
  
         }
         //if Player contacted something
-        else if contactA == PhysicsCategory.Player.rawValue {
+        if contactA == PhysicsCategory.Player.rawValue {
             switch contactB {
             case PhysicsCategory.Enemy.rawValue:
                 enemyAttackSound.play()
@@ -764,7 +819,6 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
                 playerObject.content?.removeAction(forKey: "move")
                 updateHealth()
             case PhysicsCategory.Water.rawValue:
-                playerDiesSound.play()
                 print("water contacted")
                 playerStats.energy = 0
                 playerStats.dead = true
@@ -866,27 +920,75 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         }
         // Rock contacts
         else if contactA == PhysicsCategory.Rock.rawValue && contactB == PhysicsCategory.Enemy.rawValue {
-            killEnemySound.play()
-            if contact.bodyB.node?.name == "dino1" ||
-                contact.bodyB.node?.name == "dino2" ||
-                contact.bodyB.node?.name == "dino3" ||
-            contact.bodyB.node?.name == "fire" {
-            let name = contact.bodyB.node?.name!
-            messageNode.text = "\(name!) killed"
-            contact.bodyB.node?.removeFromParent()
-            contact.bodyA.node?.removeFromParent()
+            let name:String = (contact.bodyB.node?.name)!
+            switch name {
+            case "fire":
+                killEnemySound.play()
+                let name = contact.bodyB.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+            case "dino1":
+                killEnemySound.play()
+                let name = contact.bodyB.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+                reloadDino1()
+            case "dino2":
+                killEnemySound.play()
+                let name = contact.bodyB.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+                reloadDino2()
+            case "dino3":
+                killEnemySound.play()
+                let name = contact.bodyB.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+                reloadDino3()
+            case "dino4":
+                break
+            default:
+                break
             }
         }
         else if contactB == PhysicsCategory.Rock.rawValue && contactA == PhysicsCategory.Enemy.rawValue{
-            killEnemySound.play()
-            if contact.bodyA.node?.name == "dino1" ||
-                contact.bodyA.node?.name == "dino2" ||
-                contact.bodyA.node?.name == "dino3" ||
-                contact.bodyA.node?.name == "fire" {
-            let name = contact.bodyA.node?.name!
-            messageNode.text = "\(name!) killed"
-            contact.bodyA.node?.removeFromParent()
-            contact.bodyB.node?.removeFromParent()
+            let name:String = (contact.bodyA.node?.name)!
+            switch name {
+            case "fire":
+                killEnemySound.play()
+                let name = contact.bodyA.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+            case "dino1":
+                killEnemySound.play()
+                let name = contact.bodyA.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+                reloadDino1()
+            case "dino2":
+                killEnemySound.play()
+                let name = contact.bodyA.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+                reloadDino2()
+            case "dino3":
+                killEnemySound.play()
+                let name = contact.bodyA.node?.name!
+                messageNode.text = "\(name!) killed"
+                contact.bodyB.node?.removeFromParent()
+                contact.bodyA.node?.removeFromParent()
+                reloadDino3()
+            case "dino4":
+                break
+            default:
+                break
             }
         }
     }
@@ -915,22 +1017,17 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         }
     }
     
-    //TEST
-    func addGround(){
-        
-        ground.position = CGPoint(x: 32, y: 32)
-        ground.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 2*self.frame.width, height: 64))
-        ground.physicsBody?.categoryBitMask = PhysicsCategory.Ground.rawValue
-        ground.physicsBody?.contactTestBitMask = PhysicsCategory.Player.rawValue | PhysicsCategory.Enemy.rawValue
-        //ground.physicsBody?.collisionBitMask = PhysicsCategory.Enemy.rawValue
-        ground.physicsBody?.isDynamic = false
-        addChild(ground)
- 
-    }
-    
     func addSides() {
-        let leftSide = SKNode()
-        leftSide.position = CGPoint(x: 0, y: 0)
+        let bottom = SKSpriteNode()
+        bottom.position = CGPoint(x: 0, y: 65)
+        bottom.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 2*self.frame.width, height: 0.1))
+        bottom.physicsBody?.categoryBitMask = PhysicsCategory.Top.rawValue
+        bottom.physicsBody?.contactTestBitMask = PhysicsCategory.Player.rawValue | PhysicsCategory.Enemy.rawValue
+        bottom.physicsBody?.isDynamic = false
+        addChild(bottom)
+        
+        let leftSide = SKSpriteNode()
+        leftSide.position = CGPoint(x: 1, y: 0)
         leftSide.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 0.1, height: 2*self.frame.height))
         leftSide.physicsBody?.categoryBitMask = PhysicsCategory.LeftEdge.rawValue
         leftSide.physicsBody?.contactTestBitMask = PhysicsCategory.Player.rawValue | PhysicsCategory.Enemy.rawValue
@@ -938,8 +1035,8 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         leftSide.physicsBody?.isDynamic = false
         addChild(leftSide)
         
-        let rightSide = SKNode()
-        rightSide.position = CGPoint(x: 1024, y: 0)
+        let rightSide = SKSpriteNode()
+        rightSide.position = CGPoint(x: 1023, y: 0)
         rightSide.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 0.1, height: 2*self.frame.height))
         rightSide.physicsBody?.categoryBitMask = PhysicsCategory.RightEdge.rawValue
         rightSide.physicsBody?.contactTestBitMask = PhysicsCategory.Player.rawValue | PhysicsCategory.Enemy.rawValue
@@ -947,9 +1044,9 @@ class GameScene: SKScene , SKPhysicsContactDelegate{
         rightSide.physicsBody?.isDynamic = false
         addChild(rightSide)
         
-        let top = SKNode()
-        top.position = CGPoint(x: 32, y: 672)
-        top.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 2*self.frame.width, height: 64))
+        let top = SKSpriteNode()
+        top.position = CGPoint(x: 32, y: 639)
+        top.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 2*self.frame.width, height: 0.1))
         top.physicsBody?.categoryBitMask = PhysicsCategory.Top.rawValue
         top.physicsBody?.contactTestBitMask = PhysicsCategory.Player.rawValue | PhysicsCategory.Enemy.rawValue
         top.physicsBody?.isDynamic = false
