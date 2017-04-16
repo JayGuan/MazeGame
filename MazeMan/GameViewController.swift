@@ -17,11 +17,11 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate {
         super.viewDidLoad()
         let scene = GameScene(size: self.view.bounds.size, highestScores: highScores)
         let skView = view as! SKView
-        skView.showsFPS = true
-        skView.showsNodeCount = true
+        skView.showsFPS = false
+        skView.showsNodeCount = false
         skView.ignoresSiblingOrder = true
         scene.scaleMode = .resizeFill
-        skView.showsPhysics = true
+        skView.showsPhysics = false
         skView.presentScene(scene)
     }
     

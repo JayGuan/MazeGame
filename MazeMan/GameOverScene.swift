@@ -18,20 +18,27 @@ class GameOverScene: SKScene {
         let gameOverLabel = SKLabelNode(fontNamed: "Chalkduster")
         gameOverLabel.text = ("Game Over")
         gameOverLabel.fontSize = 60
-        gameOverLabel.position = CGPoint(x: size.width/2, y: size.height/2)
+        gameOverLabel.position = CGPoint(x: size.width/2, y: size.height/2 + 200)
         self.addChild(gameOverLabel)
         
         let currentScoreLabel = SKLabelNode(fontNamed: "Chalkduster")
         currentScoreLabel.text = ("Current Score is \(score)")
         currentScoreLabel.fontSize = 40
-        currentScoreLabel.position = CGPoint(x: size.width/2, y: size.height/2 - 100)
+        currentScoreLabel.position = CGPoint(x: size.width/2, y: size.height/2 + 100)
         self.addChild(currentScoreLabel)
         
         let highScoreLable = SKLabelNode(fontNamed: "Chalkduster")
         highScoreLable.text = ("Top 3 Scores: \(highestScores[0]), \(highestScores[1]), \(highestScores[2])")
         highScoreLable.fontSize = 30
-        highScoreLable.position = CGPoint(x: size.width/2, y: size.height/2 - 200)
+        highScoreLable.position = CGPoint(x: size.width/2, y: size.height/2)
         self.addChild(highScoreLable)
+        
+        let playAgain = SKLabelNode(fontNamed: "Chalkduster")
+        playAgain.text = ("Tap to play again")
+        playAgain.fontSize = 30
+        playAgain.fontColor = UIColor.green
+        playAgain.position = CGPoint(x: size.width/2, y: size.height/2 - 100)
+        self.addChild(playAgain)
     }
     
     required init?(coder aDecoder: NSCoder) {
